@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PulmoScanAI • AI Lung Cancer Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --green: #00ffaa;
+            --bg: #040d1a;
+            --card: rgba(15, 25, 45, 0.75);
+            --border: rgba(0, 255, 170, 0.35);
+            --text: #e0fff8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* ULTRA-ELEGANT DIGITAL LAB BACKGROUND – NO SCAN LINES */
+        .lab-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        /* Molecular network – visible & beautiful */
+        .network {
+            position: absolute;
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(0,255,170,0.15) 1px, transparent 1px),
+                radial-gradient(circle at 80% 20%, rgba(0,255,170,0.15) 1px, transparent 1px),
+                radial-gradient(circle at 50% 50%, rgba(0,255,170,0.1) 1px, transparent 1px);
+            background-size: 120px 120px, 160px 160px, 200px 200px;
+            background-position: 0 0, 40px 70px, 80px 40px;
+            animation: networkFlow 40s linear infinite;
+            opacity: 0.6;
+        }
+        @keyframes networkFlow {
+            0% { background-position: 0 0, 40px 70px, 80px 40px; }
+            100% { background-position: 120px 120px, -120px -50px, -80px 100px; }
+        }
+
+        /* Energy pulse waves */
+        .pulse-wave {
+            position: absolute;
+            width: 600px; height: 600px;
+            border: 2px solid rgba(0,255,170,0.3);
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 12s infinite ease-out;
+            opacity: 0;
+        }
+        .pulse-wave:nth-child(2) { animation-delay: 4s; width: 800px; height: 800px; }
+        .pulse-wave:nth-child(3) { animation-delay: 8s; width: 1000px; height: 1000px; }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0.6; }
+            80% { opacity: 0.2; }
+            100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+        }
+
+        /* Floating luminous cells / particles – clearly visible */
+        .cell {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #00ffaa;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #00ffaa, 0 0 60px #00ffaa;
+            opacity: 0;
+            animation: floatCell 22s infinite linear;
+        }
+        @keyframes floatCell {
+            0%   { opacity: 0; transform: translateY(110vh) scale(0.2) rotate(0deg); }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { opacity: 0; transform: translateY(-150px) scale(1) rotate(360deg); }
+        }
+
+        /* Soft central glow */
+        .core-glow {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 900px; height: 900px;
+            background: radial-gradient(circle, rgba(0,255,170,0.12) 0%, transparent 65%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: breathe 15s infinite ease-in-out;
+        }
+        @keyframes breathe {
+            0%,100% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+            50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.6; }
+        }
+
+        header { text-align: center; margin: 110px 0 60px; z-index: 10; position: relative; }
+        .main-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3.5rem, 7vw, 5.5rem);
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff, #00ffaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 40px rgba(0,255,170,0.5);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .upload-panel, .result-panel {
+            background: var(--card);
+            backdrop-filter: blur(28px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .upload-panel {
+            max-height: fit-content;
+        }
+
+        .panel-title, .result-title { font-size: 1.4rem; color: white; margin-bottom: 8px; font-weight: 600; }
+        .result-title { text-align: center; margin-bottom: 24px; }
+        .panel-subtitle { font-size: 0.9rem; color: #bbbbbb; margin-bottom: 28px; }
+
+        .upload-box {
+            background: rgba(0,255,170,0.12);
+            border: 2px solid rgba(0,255,170,0.4);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 180px;
+            margin-bottom: 20px;
+        }
+        .upload-box:hover { background: rgba(0,255,170,0.22); border-color: var(--green); transform: translateY(-5px); }
+        .upload-box.dragover { background: rgba(0,255,170,0.3); }
+
+        .upload-icon { font-size: 2.2rem; color: var(--green); }
+        .upload-text { font-size: 1rem; color: white; font-weight: 600; }
+        .upload-info { font-size: 0.8rem; color: #aaa; margin-top: 4px; }
+
+        #file-input { display: none; }
+
+        .scanner-container {
+            margin: 24px auto;
+            width: 85%;
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .scanner-bar {
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--green), transparent);
+            animation: scan 1.8s linear infinite;
+            box-shadow: 0 0 20px var(--green);
+        }
+        @keyframes scan { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: var(--green);
+            color: #000;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 12px 40px rgba(0,255,170,0.6);
+            transition: all 0.4s;
+        }
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 60px rgba(0,255,170,0.8);
+        }
+
+        .result-panel { align-items: center; }
+        .preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 6px;
+        }
+        .preview img {
+            width: 240px;
+            height: 240px;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 2px solid var(--border);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            display: block;
+        }
+
+        .result-box {
+            padding: 18px 16px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: center;
+            min-height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 24px auto 0;
+            max-width: 260px;
+        }
+        .cancer { border: 3px solid #ff3366; color: #ff6b9d; }
+        .normal { border: 3px solid var(--green); color: var(--green); }
+
+        footer { text-align: center; margin: 90px 0 40px; color: #666; font-size: 0.9rem; z-index: 2; position: relative; }
+
+        @media (max-width: 992px) { .container { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .upload-box { flex-direction: column; } }
+    </style>
+</head>
+<body>
+
+    <!-- ELEGANT DIGITAL LAB BACKGROUND -->
+    <div class="lab-bg">
+        <div class="network"></div>
+        <div class="core-glow"></div>
+        <div class="pulse-wave"></div>
+        <div class="pulse-wave"></div>
+        <div class="pulse-wave"></div>
+    </div>
+
+    <header>
+        <h1 class="main-title">PulmoScanAI</h1>
+    </header>
+
+    <div class="container">
+        <div class="upload-panel">
+            <h2 class="panel-title">Upload Image</h2>
+            <p class="panel-subtitle">Trained on 100,000+ histopathology samples</p>
+
+            <label for="file-input" class="upload-box" id="upload-box">
+                <i class="fas fa-microscope upload-icon"></i>
+                <div>
+                    <div class="upload-text">Drop image or click to browse</div>
+                    <div class="upload-info">JPG, PNG, TIFF • Max 20MB</div>
+                </div>
+            </label>
+            <input type="file" id="file-input" accept="image/*">
+
+            <div class="scanner-container" id="scanner"><div class="scanner-bar"></div></div>
+
+            <button class="analyze-btn" id="analyze-btn">
+                <span id="btn-text">Analyze with AI</span>
+            </button>
+        </div>
+
+        <div class="result-panel">
+            <h2 class="result-title">Detection Result</h2>
+            <div class="preview" id="preview"></div>
+            <div class="result-box" id="result">Upload an image and click Analyze</div>
+        </div>
+    </div>
+
+    <footer>© 2025 PulmoScanAI • Next-Gen AI Pathology Platform</footer>
+
+    <script>
+        // Create 20 beautiful floating cells
+        for(let i = 0; i < 20; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.style.left = Math.random() * 100 + '%';
+            cell.style.animationDelay = Math.random() * 20 + 's';
+            cell.style.animationDuration = 18 + Math.random() * 18 + 's';
+            document.querySelector('.lab-bg').appendChild(cell);
+        }
+
+        // Functional script (unchanged)
+        const input = document.getElementById('file-input');
+        const uploadBox = document.getElementById('upload-box');
+        const preview = document.getElementById('preview');
+        const result = document.getElementById('result');
+        const scanner = document.getElementById('scanner');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const btnText = document.getElementById('btn-text');
+
+        ['dragenter','dragover'].forEach(e => uploadBox.addEventListener(e, ev => { ev.preventDefault(); uploadBox.classList.add('dragover'); }));
+        ['dragleave','drop'].forEach(e => uploadBox.addEventListener(e, ev => { ev.preventDefault(); uploadBox.classList.remove('dragover'); }));
+        uploadBox.addEventListener('drop', e => e.dataTransfer.files[0] && (input.files = e.dataTransfer.files) && handleFile(e.dataTransfer.files[0]));
+        input.addEventListener('change', e => e.target.files[0] && handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = e => preview.innerHTML = `<img src="${e.target.result}" alt="Sample">`;
+            reader.readAsDataURL(file);
+        }
+
+        analyzeBtn.addEventListener('click', () => {
+            if (!input.files.length) return alert("Please upload an image first");
+            
+            const formData = new FormData();
+            formData.append('image', input.files[0]);
+            
+            btnText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Analyzing...`;
+            analyzeBtn.disabled = true;
+            scanner.style.display = 'block';
+            result.innerHTML = "AI is analyzing tissue...";
+            result.className = "result-box";
+
+            // Send image to backend for real model prediction
+            // Use relative URL to work with any deployment (localhost, Hugging Face, etc)
+            fetch('/api/predict', {
+                method: 'POST',
+                body: formData,
+                cache: 'no-store',  // Prevent caching
+                headers: {
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                scanner.style.display = 'none';
+                
+                // Clear previous result classes
+                result.className = "result-box";
+                
+                if (data.error) {
+                    result.innerHTML = `Error: ${data.error}`;
+                    result.className = "result-box";
+                } else {
+                    const diagnosis = data.diagnosis;
+                    const confidence = data.confidence_percentage;
+                    result.innerHTML = `${diagnosis}<br><span style="font-size: 0.9rem; opacity: 0.85;">${confidence}% Confidence</span>`;
+                    
+                    // Apply correct color based on prediction
+                    if (data.is_cancer) {
+                        result.classList.add('cancer');
+                    } else {
+                        result.classList.add('normal');
+                    }
+                }
+                
+                btnText.textContent = "Analyze with AI";
+                analyzeBtn.disabled = false;
+            })
+            .catch(error => {
+                scanner.style.display = 'none';
+                result.innerHTML = `Error: ${error.message}`;
+                result.className = "result-box";
+                btnText.textContent = "Analyze with AI";
+                analyzeBtn.disabled = false;
+                console.error('Prediction error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
