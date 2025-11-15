@@ -12,6 +12,10 @@ pinned: false
 
 An advanced web-based application for detecting lung cancer from histopathology images using a deep learning CNN model with feature-based analysis.
 
+🚀 **Live Demo:**  
+👉 **https://huggingface.co/spaces/themisfit21/PulmoScanAI**
+
+
 ## Features
 
 - **Real-time AI Analysis**: Uses TensorFlow/Keras deep learning model
